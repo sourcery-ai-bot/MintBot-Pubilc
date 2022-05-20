@@ -31,14 +31,23 @@ cqhttpaccesstoken = '' #连接CQ-Http服务器用的access_token，没有则留�
 MintBotVersion = 'MintBot V20220508' #机器人版本号
 BotName = '薄荷本兽' #机器人名字
 ZlibraryURL = 'zh.book4you.org' #服务器可以链接到Zlibrary的地址(无须加 http:// 或 https:// )(检查可用链接请访问:https://zh.1lib.domains/?redirectUrl=/) #服务器出现问题(或者说被墙了)，暂时停止维护
-menulist = [BotName+',找找(名字) ---在涂鸦宇宙中查找小伙伴',BotName+',今日早报 ---查看今日的60秒早报',BotName+',来只毛 ---随机在绒狸API获取一张毛图片',BotName+',(城市)天气 ---在和风天气查找对应城市的实时天气',BotName+',(音乐平台)搜歌(歌名) ---在音乐搜索器API搜索歌曲(若不知道支持平台可以把平台名字留空后发送查看)',BotName+'丢(/赞/爬/摸摸)(QQ号) ---发送自定义表情',BotName+',摸鱼日历 ---调用韩小韩API获取今日摸鱼日历',] #机器人目前支持的功能
+menulist = [
+    f'{BotName},找找(名字) ---在涂鸦宇宙中查找小伙伴',
+    f'{BotName},今日早报 ---查看今日的60秒早报',
+    f'{BotName},来只毛 ---随机在绒狸API获取一张毛图片',
+    f'{BotName},(城市)天气 ---在和风天气查找对应城市的实时天气',
+    f'{BotName},(音乐平台)搜歌(歌名) ---在音乐搜索器API搜索歌曲(若不知道支持平台可以把平台名字留空后发送查看)',
+    f'{BotName}丢(/赞/爬/摸摸)(QQ号) ---发送自定义表情',
+    f'{BotName},摸鱼日历 ---调用韩小韩API获取今日摸鱼日历',
+]
+
 pokelist = [' 嗷呜OwO',' 呜呜不要再戳了QwQ',' 哇啊好痛QAQ',' awa',' 喵呜OwO',' ~~'] #机器人被戳一戳后会随机发送的消息
 songlist = ['网易云','QQ音乐','酷狗','酷我','千千','一听','咪咕','荔枝','蜻蜓','喜马拉雅','5sing原创','5sing翻唱','全民K歌'] #目前音乐搜索器支持的音乐平台
 privateblacklist = [] #私聊黑名单
 groupblacklist = [] #群聊黑名单
 #上面是一些配置
 ListenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ListenSocket.bind((str(cqhttpserverip), int(cqhttpposthost)))
+ListenSocket.bind((cqhttpserverip, cqhttpposthost))
 ListenSocket.listen(100)
 HttpResponseHeader = '''HTTP/1.1 200 OK
 Host: 127.0.0.1
@@ -50,27 +59,31 @@ Accept-Language: en-US,en;q=0.9
 Connection: close
 
 '''
-print('机器人QQ号:'+QQID)
-print('超级管理员QQ：'+str(superadmin))
-print('和风天气API的KEY：'+weatherKEY)
-print('一铭API密钥：'+str(onemingKey))
-print('Z-library链接：'+ZlibraryURL) #服务器出现问题(或者说被墙了)，暂时停止维护
-print('Z-library登录邮箱：'+ZlibUserEmail) #服务器出现问题(或者说被墙了)，暂时停止维护
-print('Z-library登录密码：'+ZlibPassword) #服务器出现问题(或者说被墙了)，暂时停止维护
-print('CQ-HTTP服务端IP：'+cqhttpserverip)
-print('CQ-HTTP服务端IP端口：'+str(cqhttpserveriphost))
-print('CQ-HTTP服务端反向Post端口：'+str(cqhttpposthost))
-print('CQ-HTTP服务端access_token：' + str(cqhttpaccesstoken))
-print('机器人名字：'+BotName)
-print('机器人版本：'+MintBotVersion)
-print('私聊黑名单:'+str(privateblacklist))
-print('群聊黑名单:'+str(groupblacklist))
+print(f'机器人QQ号:{QQID}')
+print(f'超级管理员QQ：{superadmin}')
+print(f'和风天气API的KEY：{weatherKEY}')
+print(f'一铭API密钥：{onemingKey}')
+print(f'Z-library链接：{ZlibraryURL}')
+print(f'Z-library登录邮箱：{ZlibUserEmail}')
+print(f'Z-library登录密码：{ZlibPassword}')
+print(f'CQ-HTTP服务端IP：{cqhttpserverip}')
+print(f'CQ-HTTP服务端IP端口：{cqhttpserveriphost}')
+print(f'CQ-HTTP服务端反向Post端口：{cqhttpposthost}')
+print(f'CQ-HTTP服务端access_token：{cqhttpaccesstoken}')
+print(f'机器人名字：{BotName}')
+print(f'机器人版本：{MintBotVersion}')
+print(f'私聊黑名单:{privateblacklist}')
+print(f'群聊黑名单:{groupblacklist}')
 print('配置加载完成，若信息错误请自己修改配置信息。')
 def request_to_json(msg):
-    for i in range(len(msg)):
-        if msg[i]=="{" and msg[-1]=="\n":
-            return json.loads(msg[i:])
-    return None
+    return next(
+        (
+            json.loads(msg[i:])
+            for i in range(len(msg))
+            if msg[i] == "{" and msg[-1] == "\n"
+        ),
+        None,
+    )
 #需要循环执行，返回值为json格式
 def rev_msg():# json or None
     Client, Address = ListenSocket.accept()
@@ -125,135 +138,155 @@ def send_msg(resp_dict):
         Continue
     if msg_type == 'group':
         if cqhttpaccesstoken != '':
-            payload = "GET /send_group_msg?access_token="+str(cqhttpaccesstoken)+"&group_id=" + str(
-                number) + "&message=" + msg + " HTTP/1.1\r\nHost:" + str(cqhttpserverip) + ":"+str(cqhttpserveriphost)+"\r\nConnection: close\r\n\r\n"
+            payload = (
+                (
+                    (
+                        (
+                            (
+                                f"GET /send_group_msg?access_token={str(cqhttpaccesstoken)}&group_id={str(number)}"
+                                + "&message="
+                            )
+                            + msg
+                        )
+                        + " HTTP/1.1\r\nHost:"
+                    )
+                    + str(cqhttpserverip)
+                    + ":"
+                )
+                + str(cqhttpserveriphost)
+                + "\r\nConnection: close\r\n\r\n"
+            )
+
         else:
-            payload = "GET /send_group_msg?group_id=" + str(
-                number) + "&message=" + msg + " HTTP/1.1\r\nHost:" + str(cqhttpserverip) + ":"+str(cqhttpserveriphost)+"\r\nConnection: close\r\n\r\n"
+            payload = (
+                (
+                    (
+                        (
+                            (
+                                f"GET /send_group_msg?group_id={str(number)}"
+                                + "&message="
+                            )
+                            + msg
+                        )
+                        + " HTTP/1.1\r\nHost:"
+                    )
+                    + str(cqhttpserverip)
+                    + ":"
+                )
+                + str(cqhttpserveriphost)
+                + "\r\nConnection: close\r\n\r\n"
+            )
+
     elif msg_type == 'private':
+        try:
+            msg = msg.replace(f"[CQ:at,qq={str(searchsongQQ)}]", "您好")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace(f'[CQ:at,qq={str(qq)}]', "您好")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace(f"[CQ:at,qq={str(searchsongQQ)}]", "您好")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=156]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=74]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=161]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=157]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=160]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
+        try:
+            msg = msg.replace("[CQ:face,id=162]","")
+            Continue
+        except BaseException as error:
+            #print('所有异常的基类：'+str(error))
+            Continue
         if cqhttpaccesstoken != '':
-            try:
-                msg = msg.replace("[CQ:at,qq="+str(searchsongQQ)+"]", "您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace('[CQ:at,qq='+str(qq)+']',"您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:at,qq="+str(searchsongQQ)+"]","您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=156]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=74]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=161]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=157]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=160]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=162]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            payload = "GET /send_private_msg?access_token="+str(cqhttpaccesstoken)+"&user_id=" + str(
-                number) + "&message=" + msg + " HTTP/1.1\r\nHost:" + str(cqhttpserverip) + ":"+str(cqhttpserveriphost)+"\r\nConnection: close\r\n\r\n"
+            payload = (
+                (
+                    (
+                        (
+                            (
+                                f"GET /send_private_msg?access_token={str(cqhttpaccesstoken)}&user_id={str(number)}"
+                                + "&message="
+                            )
+                            + msg
+                        )
+                        + " HTTP/1.1\r\nHost:"
+                    )
+                    + str(cqhttpserverip)
+                    + ":"
+                )
+                + str(cqhttpserveriphost)
+                + "\r\nConnection: close\r\n\r\n"
+            )
+
         else:
-            try:
-                msg = msg.replace("[CQ:at,qq="+str(searchsongQQ)+"]", "您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace('[CQ:at,qq='+str(qq)+']',"您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:at,qq="+str(searchsongQQ)+"]","您好")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=156]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=74]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=161]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=157]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=160]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            try:
-                msg = msg.replace("[CQ:face,id=162]","")
-                Continue
-            except BaseException as error:
-                #print('所有异常的基类：'+str(error))
-                Continue
-            payload = "GET /send_private_msg?user_id=" + str(
-                number) + "&message=" + msg + " HTTP/1.1\r\nHost:" + str(cqhttpserverip) + ":"+str(cqhttpserveriphost)+"\r\nConnection: close\r\n\r\n"
-    print("发送" + payload)
+            payload = (
+                (
+                    (
+                        (
+                            (
+                                f"GET /send_private_msg?user_id={str(number)}"
+                                + "&message="
+                            )
+                            + msg
+                        )
+                        + " HTTP/1.1\r\nHost:"
+                    )
+                    + str(cqhttpserverip)
+                    + ":"
+                )
+                + str(cqhttpserveriphost)
+                + "\r\nConnection: close\r\n\r\n"
+            )
+
+    print(f"发送{payload}")
     client.send(payload.encode("utf-8"))
     client.close()
     return 0
 def get_group(id):
     if cqhttpaccesstoken != '':
-        response = requests.post('http://'+str(cqhttpserverip)+':'+str(cqhttpserveriphost)+'/get_group_member_list?access_token='+str(cqhttpaccesstoken)+'&group_id='+str(id)).json()
+        response = requests.post(
+            f'http://{str(cqhttpserverip)}:{str(cqhttpserveriphost)}/get_group_member_list?access_token={str(cqhttpaccesstoken)}&group_id={str(id)}'
+        ).json()
+
     else:
-        response = requests.post('http://'+str(cqhttpserverip)+':'+str(cqhttpserveriphost)+'/get_group_member_list?group_id='+str(id)).json()
+        response = requests.post(
+            f'http://{str(cqhttpserverip)}:{str(cqhttpserveriphost)}/get_group_member_list?group_id={str(id)}'
+        ).json()
+
     for i in response['data']:
         if(i['card']!=''):
             print(i['card']+str(i['user_id']))
@@ -261,16 +294,17 @@ def get_group(id):
             print(i['nickname']+str(i['user_id']))
 def sea_mp3(songpagefun):
     songaddress = 'http://www.xmsj.org/'
-    songnamelist = []
-    songimagelist = []
-    songlinklist = []
-    songmp3list = []
-    songidlist = []
     messagescucess = 0
     songlistline = 0
     songpage = int(songpagefun)
     songheader = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4515.159 Safari/537.36','X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','Accept':'application/json, text/javascript, */*; q=0.01','Connection':'keep-alive'}
-    songdata = {'input':str(songname),'filter':'name','type':str(songtype),'page':int(songpage)}
+    songdata = {
+        'input': str(songname),
+        'filter': 'name',
+        'type': str(songtype),
+        'page': songpage,
+    }
+
     print(songdata)
     #songgetrequestscookies = requests.get('http://ia.51.la/go1?id=19997613').cookies
     #print(songgetrequestscookies)
@@ -279,7 +313,12 @@ def sea_mp3(songpagefun):
     print(songpostrequests)
     songjson = demjson.decode(songpostrequests)
     if songjson.get("code") == 200:
-        songmessage = "[CQ:face,id=12]嗷呜OwO，这是搜索到的歌曲：" + str('\n')
+        songmessage = "[CQ:face,id=12]嗷呜OwO，这是搜索到的歌曲：" + '\n'
+        songnamelist = []
+        songimagelist = []
+        songlinklist = []
+        songmp3list = []
+        songidlist = []
         for songline in songjson.get("data"):
             songnamelist.append(songline.get("title")+'---'+songline.get('author'))
             print(songline.get("title")+'---'+songline.get('author'))
@@ -291,23 +330,76 @@ def sea_mp3(songpagefun):
             print(songline.get("link"))
             songmp3list.append(songline.get("url"))
             print(songline.get("url"))
-            songmessage = songmessage + '歌名：'+ str(songline.get("title"))+'---'+str(songline.get('author')) + str("\n") + '歌曲ID：'+ str(songline.get("songid")) + str("\n") + '[CQ:image,file='+str(songline.get("pic"))+']'+str("\n") + '歌曲链接：' + str(songline.get("link")) + str("\n")
+            songmessage = (
+                f'{songmessage}歌名：'
+                + str(songline.get("title"))
+                + '---'
+                + str(songline.get('author'))
+                + "\n"
+                + '歌曲ID：'
+                + str(songline.get("songid"))
+                + "\n"
+                + '[CQ:image,file='
+                + str(songline.get("pic"))
+                + ']'
+                + "\n"
+                + '歌曲链接：'
+                + str(songline.get("link"))
+                + "\n"
+            )
+
             songlistline = songlistline +1
             print(songlistline)
-        songmessage = songmessage + str('"音乐API来自音乐搜索器,请根据对应序号回复对应阿拉伯数字.当前为第'+str(songpage)+'页，你可以回复"'+BotName+'，下一页"进行翻页操作(你有1分钟的操作时间,在此期间其他人无法进行操作,除非使用人执行"停止"命令或超时(任何人都可以回复"'+BotName+'，停止操作"中止执行人操作))(音乐是语音与Mp3链接一起发出，若没有受到语音可直接点击Mp3链接进行在线试听)(不支持购买播放和一份中试听，这一类的歌曲会导致语音和mp3链接一起失效)。"'+str('\n')+"-------------------"+str('\n')+MintBotVersion)
+        songmessage = songmessage + str(
+            '"音乐API来自音乐搜索器,请根据对应序号回复对应阿拉伯数字.当前为第'
+            + str(songpage)
+            + '页，你可以回复"'
+            + BotName
+            + '，下一页"进行翻页操作(你有1分钟的操作时间,在此期间其他人无法进行操作,除非使用人执行"停止"命令或超时(任何人都可以回复"'
+            + BotName
+            + '，停止操作"中止执行人操作))(音乐是语音与Mp3链接一起发出，若没有受到语音可直接点击Mp3链接进行在线试听)(不支持购买播放和一份中试听，这一类的歌曲会导致语音和mp3链接一起失效)。"'
+            + '\n'
+            + "-------------------"
+            + '\n'
+            + MintBotVersion
+        )
+
         send_msg({'msg_type':str(messagetype),'number':sendid,'msg':songmessage})
         return 200
     elif songjson.get("code") == 404:
         print(songjson.get("error"))
-        send_msg({'msg_type':str(messagetype),'number':sendid,'msg':"[CQ:at,qq="+str(searchsongQQ)+"][CQ:face,id=9]呜呜,找不到对应的歌曲QAQ"+str('\n')+"-------------------"+str('\n')+MintBotVersion})
+        send_msg(
+            {
+                'msg_type': str(messagetype),
+                'number': sendid,
+                'msg': f"[CQ:at,qq={str(searchsongQQ)}][CQ:face,id=9]呜呜,找不到对应的歌曲QAQ"
+                + '\n'
+                + "-------------------"
+                + '\n'
+                + MintBotVersion,
+            }
+        )
+
         return 404
     else:
         print(songjson.get("error"))
-        send_msg({'msg_type':str(messagetype),'number':sendid,'msg':"[CQ:at,qq="+str(searchsongQQ)+"][CQ:face,id=9]呜呜,出错了QAQ："+str(songjson.get("error"))+str('\n')+"-------------------"+str('\n')+MintBotVersion})
+        send_msg(
+            {
+                'msg_type': str(messagetype),
+                'number': sendid,
+                'msg': f"[CQ:at,qq={str(searchsongQQ)}][CQ:face,id=9]呜呜,出错了QAQ："
+                + str(songjson.get("error"))
+                + '\n'
+                + "-------------------"
+                + '\n'
+                + MintBotVersion,
+            }
+        )
+
         return songjson.get("code")
 def furbotbuildSignString(apiPath,timestamp,authKey):
     #timestamp = int(time.time())
-    furoriginal = int(str(apiPath)+'-'+str(timestamp)+'-'+str(authKey))
+    furoriginal = int(f'{str(apiPath)}-{str(timestamp)}-{str(authKey)}')
     print(furoriginal)
     furhash = int(hashlib.md5())
     print(furhash)
@@ -326,16 +418,15 @@ def furbotbuildSignString(apiPath,timestamp,authKey):
     #fun16byte = hex(ord(funbytes))
     fun16byte = hex(funbytes)
     print(fun16byte)
-    if fun16byte == '' or fun16byte == 'null':
-        if len(fun16byte) > 1:
-            funreturn =int(bytes("".join(map(fun16byte))))
-            print(funreturn)
-        else:
-            funreturn = int(bytes("".join(map('0' + str(fun16byte)))))
-            print(funreturn)
-    else:
+    if (
+        fun16byte in {'', 'null'}
+        and len(fun16byte) > 1
+        or fun16byte not in ['', 'null']
+    ):
         funreturn =int(bytes("".join(map(fun16byte))))
-        print(funreturn)
+    else:
+        funreturn = int(bytes("".join(map(f'0{fun16byte}'))))
+    print(funreturn)
     #funreturn = funbyte
     return funreturn
     
